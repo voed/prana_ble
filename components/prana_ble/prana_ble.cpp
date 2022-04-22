@@ -39,7 +39,20 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       //request_read_values_();
       break;
     }
-
+    case ESP_GATTC_WRITE_CHAR_EVT: {
+      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
+      if (param->read.conn_id != this->parent()->conn_id)
+        break;
+      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
+      if (param->read.status != ESP_GATT_OK) {
+        ESP_LOGW(TAG, "Data %d, len %d", param->read.value[10], param->read.value_len);
+        break;
+      }
+      if (param->read.handle == this->char_handle_) {
+        read_sensors_(param->read.value, param->read.value_len);
+      }
+      break;
+    }
     case ESP_GATTC_READ_CHAR_EVT: {
       ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
       if (param->read.conn_id != this->parent()->conn_id)
@@ -141,7 +154,7 @@ void PranaBLE::update() {
 void PranaBLE::write_query_message_() {
   ESP_LOGW(TAG, "writing 0x50 to write service");
   uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
-  auto status = esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->char_handle_,
+  auto status = esp_ble_gattc_write_char_desc(this->parent()->gattc_if, this->parent()->conn_id, this->char_handle_,
                                                sizeof(request), request, ESP_GATT_WRITE_TYPE_NO_RSP,
                                                ESP_GATT_AUTH_REQ_NONE);
   if (status) {
