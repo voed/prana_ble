@@ -91,7 +91,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       if (param->write.handle == this->char_handle_cmd_) {
         if (this->force_refresh_) {
           // Command write was successful. Publish the pending state, hoping that notify will kick in.
-          this->publish_state();
+          //this->publish_state();
         }
       }
       break;
@@ -145,7 +145,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
         ESP_LOGW(TAG, " Unexpected notify handle, wanted %04X, got %04X", this->char_handle_status_, param->notify.handle);
         break;
       }
-      write_bedjet_packet_()
+      write_bedjet_packet_();
       // FIXME: notify events come in every ~200-300 ms, which is too fast to be helpful. So we
       //  throttle the updates to once every MIN_NOTIFY_THROTTLE (5 seconds).
       //  Another idea would be to keep notify off by default, and use update() as an opportunity to turn on
@@ -224,7 +224,7 @@ uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
 
 
 /** Writes one BedjetPacket to the BLE client on the BEDJET_COMMAND_UUID. */
-uint8_t Bedjet::write_bedjet_packet_()//(BedjetPacket *pkt) {
+uint8_t Bedjet::write_bedjet_packet_(){//(BedjetPacket *pkt) {
   if (this->node_state != espbt::ClientState::ESTABLISHED) {
     if (!this->parent_->enabled) {
       ESP_LOGI(TAG, "Cannot write packet: Not connected, enabled=false");
