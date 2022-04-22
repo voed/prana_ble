@@ -155,7 +155,7 @@ void PranaBLE::request_read_values_() {
 }
 
 void PranaBLE::dump_config() {
-  LOG_SENSOR(TAG, "Prana BLE");
+  ESP_LOGW(TAG, "Prana BLE");
 }
 
 PranaBLE::RadonEyeRD200()
