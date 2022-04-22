@@ -60,7 +60,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       this->write_notify_config_descriptor_(true);
 
 
-      ESP_LOGD(TAG, "Services complete: obtained char handles. 0x%x %s " this->char_handle_status_, descr->uuid.to_string().c_str());
+      ESP_LOGD(TAG, "Services complete: obtained char handles. 0x%x %s ", this->char_handle_status_, descr->uuid.to_string().c_str());
       this->node_state = espbt::ClientState::ESTABLISHED;
 
       this->set_notify_(true);
