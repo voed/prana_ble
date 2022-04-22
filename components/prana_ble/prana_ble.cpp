@@ -28,6 +28,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       break;
     }
     case ESP_GATTC_SEARCH_CMPL_EVT: {
+      ESP_LOGW(TAG, "ESP_GATTC_SEARCH_CMPL_EVT");
       auto *chr = this->parent_->get_characteristic(BEDJET_SERVICE_UUID, BEDJET_COMMAND_UUID);
       if (chr == nullptr) {
         ESP_LOGW(TAG, "No control service found at device, not a BedJet..?");
@@ -228,8 +229,9 @@ uint8_t Bedjet::write_bedjet_packet_(){//(BedjetPacket *pkt) {
     }
     return -1;
   }
-
   uint8_t cmd[] = { 0xBE, 0xEF, 0x04, 0x0C };
+  ESP_LOGW(TAG, "Writing command %s", cmd);
+  
   auto status = esp_ble_gattc_write_char(this->parent_->gattc_if, this->parent_->conn_id, this->char_handle_cmd_,
                                          sizeof(cmd), cmd, ESP_GATT_WRITE_TYPE_NO_RSP,
                                          ESP_GATT_AUTH_REQ_NONE);
