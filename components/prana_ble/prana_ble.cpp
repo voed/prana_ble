@@ -235,7 +235,7 @@ uint8_t Bedjet::write_bedjet_packet_(){//(BedjetPacket *pkt) {
     }
     return -1;
   }
-  char cmd[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
+  uint8_t cmd[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
   ESP_LOGW(TAG, "Writing command %s", cmd);
   
   auto status = esp_ble_gattc_write_char(this->parent_->gattc_if, this->parent_->conn_id, this->char_handle_cmd_,
