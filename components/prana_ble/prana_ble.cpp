@@ -161,7 +161,7 @@ void PranaBLE::dump_config() {
 PranaBLE::PranaBLE()
     : PollingComponent(10000),
       service_uuid_(esp32_ble_tracker::ESPBTUUID::from_raw(SERVICE_UUID)),
-      sensors_char_uuid_(esp32_ble_tracker::ESPBTUUID::from_raw(RW_CHARACTERISTIC_UUID)),
+      sensors_char_uuid_(esp32_ble_tracker::ESPBTUUID::from_raw(RW_CHARACTERISTIC_UUID)) {}
 
 }  // namespace prana_ble
 }  // namespace esphome
