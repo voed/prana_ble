@@ -65,6 +65,10 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
 
       this->set_notify_(true);
       write_bedjet_packet_();
+
+
+
+
       break;
     }
     case ESP_GATTC_WRITE_DESCR_EVT: {
@@ -231,7 +235,7 @@ uint8_t Bedjet::write_bedjet_packet_(){//(BedjetPacket *pkt) {
     }
     return -1;
   }
-  uint8_t cmd[] = { 0xBE, 0xEF, 0x04, 0x0C };
+  uint8_t cmd[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
   ESP_LOGW(TAG, "Writing command %s", cmd);
   
   auto status = esp_ble_gattc_write_char(this->parent_->gattc_if, this->parent_->conn_id, this->char_handle_cmd_,
@@ -256,7 +260,7 @@ uint8_t Bedjet::set_notify_(const bool enable) {
       ESP_LOGW(TAG, "esp_ble_gattc_unregister_for_notify failed, status=%d", status);
     }
   }
-  ESP_LOGV(TAG, "set_notify: enable=%d; result=%d", enable, status);
+  ESP_LOGW(TAG, "set_notify: enable=%d; result=%d", enable, status);
   return status;
 }
 
