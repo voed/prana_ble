@@ -33,9 +33,7 @@ class Bedjet : public esphome::ble_client::BLEClientNode, public PollingComponen
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
 
-#ifdef USE_TIME
-  void set_time_id(time::RealTimeClock *time_id) { this->time_id_ = time_id; }
-#endif
+
   void set_status_timeout(uint32_t timeout) { this->timeout_ = timeout; }
 
 
