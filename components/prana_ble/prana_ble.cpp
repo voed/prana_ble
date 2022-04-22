@@ -60,7 +60,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
 
       this->set_notify_(true);
       //this->write_notify_config_descriptor_(true);
-      write_bedjet_packet_();
+      //write_bedjet_packet_();
       ESP_LOGD(TAG, "Services complete: obtained char handles. 0x%x %s ", this->char_handle_status_, descr->uuid.to_string().c_str());
       this->node_state = espbt::ClientState::ESTABLISHED;
 
@@ -245,6 +245,12 @@ uint8_t Bedjet::write_bedjet_packet_(){//(BedjetPacket *pkt) {
   auto status = esp_ble_gattc_write_char(this->parent_->gattc_if, this->parent_->conn_id, this->char_handle_cmd_,
                                          sizeof(cmd), cmd, ESP_GATT_WRITE_TYPE_NO_RSP,
                                          ESP_GATT_AUTH_REQ_NONE);
+
+  status = esp_ble_gattc_read_char(this->parent_->gattc_if, this->parent_->conn_id,
+                                                this->char_handle_status_, ESP_GATT_AUTH_REQ_NONE);
+          if (status) {
+            ESP_LOGI(TAG, " Unable to read extended status packet");
+          }
   return status;
 }
 
