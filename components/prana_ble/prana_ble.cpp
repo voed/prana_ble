@@ -36,7 +36,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       }
       this->char_handle_cmd_ = chr->handle;
 
-      chr = this->parent_->get_characteristic(BEDJET_SERVICE_UUID, BEDJET_COMMAND_UUID);
+      chr = this->parent_->get_characteristic(BEDJET_SERVICE_UUID, BEDJET_STATUS_UUID);
       if (chr == nullptr) {
         ESP_LOGW(TAG, " No status service found at device, not a BedJet..?");
         break;
@@ -57,12 +57,12 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       } else {
         this->config_descr_status_ = descr->handle;
       }
-      this->write_notify_config_descriptor_(true);
 
 
       ESP_LOGD(TAG, "Services complete: obtained char handles. 0x%x %s ", this->char_handle_status_, descr->uuid.to_string().c_str());
       this->node_state = espbt::ClientState::ESTABLISHED;
 
+      this->write_notify_config_descriptor_(true);
       this->set_notify_(true);
       write_bedjet_packet_();
 
@@ -124,7 +124,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
         ESP_LOGW(TAG, "Register for notify on unexpected handle 0x%04x, expecting 0x%04x", param->reg_for_notify.handle, this->char_handle_status_);
         break;
       }
-
+      this->set_notify_(true);
       this->write_notify_config_descriptor_(true);
       this->last_notify_ = 0;
       this->force_refresh_ = true;
