@@ -12,7 +12,7 @@ void Bedjet::dump_config() {
 }
 
 void Bedjet::setup() {
-  this->codec_ = make_unique<BedjetCodec>();
+
 
   // restore set points
   auto restore = this->restore_state_();
