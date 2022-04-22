@@ -30,14 +30,14 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
     case ESP_GATTC_SEARCH_CMPL_EVT: {
       auto *chr = this->parent_->get_characteristic(BEDJET_SERVICE_UUID, BEDJET_COMMAND_UUID);
       if (chr == nullptr) {
-        ESP_LOGW(TAG, "[%s] No control service found at device, not a BedJet..?", this->get_name().c_str());
+        ESP_LOGW(TAG, "No control service found at device, not a BedJet..?");
         break;
       }
       this->char_handle_cmd_ = chr->handle;
 
       chr = this->parent_->get_characteristic(BEDJET_SERVICE_UUID, BEDJET_STATUS_UUID);
       if (chr == nullptr) {
-        ESP_LOGW(TAG, "[%s] No status service found at device, not a BedJet..?", this->get_name().c_str());
+        ESP_LOGW(TAG, " No status service found at device, not a BedJet..?");
         break;
       }
 
@@ -79,7 +79,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       }
       // [16:44:44][V][bedjet:279]: [JOENJET] Register for notify event success: h=0x002a s=0
       // This might be the enable-notify descriptor? (or disable-notify)
-      ESP_LOGV(TAG, "[%s] Write to handle 0x%04x status=%d", this->get_name().c_str(), param->write.handle,
+      ESP_LOGV(TAG, "Write to handle 0x%04x status=%d", param->write.handle,
                param->write.status);
       break;
     }
@@ -119,8 +119,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       // doesn't break anything.
 
       if (param->reg_for_notify.handle != this->char_handle_status_) {
-        ESP_LOGW(TAG, "[%s] Register for notify on unexpected handle 0x%04x, expecting 0x%04x",
-                 this->get_name().c_str(), param->reg_for_notify.handle, this->char_handle_status_);
+        ESP_LOGW(TAG, "Register for notify on unexpected handle 0x%04x, expecting 0x%04x", param->reg_for_notify.handle, this->char_handle_status_);
         break;
       }
 
@@ -132,8 +131,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
     case ESP_GATTC_UNREG_FOR_NOTIFY_EVT: {
       // This event is not handled by the parent BLEClient, so we need to do this either way.
       if (param->unreg_for_notify.handle != this->char_handle_status_) {
-        ESP_LOGW(TAG, "[%s] Unregister for notify on unexpected handle 0x%04x, expecting 0x%04x",
-                 this->get_name().c_str(), param->unreg_for_notify.handle, this->char_handle_status_);
+        ESP_LOGW(TAG, "Unregister for notify on unexpected handle 0x%04x, expecting 0x%04x", param->unreg_for_notify.handle, this->char_handle_status_);
         break;
       }
 
@@ -144,8 +142,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
     }
     case ESP_GATTC_NOTIFY_EVT: {
       if (param->notify.handle != this->char_handle_status_) {
-        ESP_LOGW(TAG, "[%s] Unexpected notify handle, wanted %04X, got %04X", this->get_name().c_str(),
-                 this->char_handle_status_, param->notify.handle);
+        ESP_LOGW(TAG, " Unexpected notify handle, wanted %04X, got %04X", this->char_handle_status_, param->notify.handle);
         break;
       }
       write_bedjet_packet_()
@@ -158,7 +155,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       auto status = esp_ble_gattc_read_char(this->parent_->gattc_if, this->parent_->conn_id,
                                                 this->char_handle_status_, ESP_GATT_AUTH_REQ_NONE);
           if (status) {
-            ESP_LOGI(TAG, "[%s] Unable to read extended status packet", this->get_name().c_str());
+            ESP_LOGI(TAG, " Unable to read extended status packet");
           }
 
 
@@ -190,7 +187,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       break;
     }
     default:
-      ESP_LOGVV(TAG, "[%s] gattc unhandled event: enum=%d", this->get_name().c_str(), event);
+      ESP_LOGVV(TAG, "gattc unhandled event: enum=%d", event);
       break;
   }
 }
@@ -219,7 +216,7 @@ uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
     ESP_LOGW(TAG, "esp_ble_gattc_write_char_descr error, status=%d", status);
     return status;
   }
-  ESP_LOGD(TAG, "[%s] wrote notify=%s to status config 0x%04x", this->get_name().c_str(), enable ? "true" : "false",
+  ESP_LOGD(TAG, "wrote notify=%s to status config 0x%04x", enable ? "true" : "false",
            handle);
   return ESP_GATT_OK;
 }
@@ -229,9 +226,9 @@ uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
 uint8_t Bedjet::write_bedjet_packet_()//(BedjetPacket *pkt) {
   if (this->node_state != espbt::ClientState::ESTABLISHED) {
     if (!this->parent_->enabled) {
-      ESP_LOGI(TAG, "[%s] Cannot write packet: Not connected, enabled=false", this->get_name().c_str());
+      ESP_LOGI(TAG, "Cannot write packet: Not connected, enabled=false");
     } else {
-      ESP_LOGW(TAG, "[%s] Cannot write packet: Not connected", this->get_name().c_str());
+      ESP_LOGW(TAG, "Cannot write packet: Not connected");
     }
     return -1;
   }
@@ -250,29 +247,29 @@ uint8_t Bedjet::set_notify_(const bool enable) {
     status = esp_ble_gattc_register_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
                                                this->char_handle_status_);
     if (status) {
-      ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d", this->get_name().c_str(), status);
+      ESP_LOGW(TAG, "esp_ble_gattc_register_for_notify failed, status=%d", status);
     }
   } else {
     status = esp_ble_gattc_unregister_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
                                                  this->char_handle_status_);
     if (status) {
-      ESP_LOGW(TAG, "[%s] esp_ble_gattc_unregister_for_notify failed, status=%d", this->get_name().c_str(), status);
+      ESP_LOGW(TAG, "esp_ble_gattc_unregister_for_notify failed, status=%d", status);
     }
   }
-  ESP_LOGV(TAG, "[%s] set_notify: enable=%d; result=%d", this->get_name().c_str(), enable, status);
+  ESP_LOGV(TAG, "set_notify: enable=%d; result=%d", enable, status);
   return status;
 }
 
 
 void Bedjet::update() {
-  ESP_LOGV(TAG, "[%s] update()", this->get_name().c_str());
+  ESP_LOGV(TAG, "update()");
 
   if (this->node_state != espbt::ClientState::ESTABLISHED) {
     if (!this->parent()->enabled) {
-      ESP_LOGD(TAG, "[%s] Not connected, because enabled=false", this->get_name().c_str());
+      ESP_LOGD(TAG, "Not connected, because enabled=false");
     } else {
       // Possibly still trying to connect.
-      ESP_LOGD(TAG, "[%s] Not connected, enabled=true", this->get_name().c_str());
+      ESP_LOGD(TAG, "Not connected, enabled=true");
     }
 
     return;
@@ -289,14 +286,14 @@ void Bedjet::update() {
       // We can try to unregister for notifications now, and then re-register, hoping to clear it up...
       // But how do we know for sure which state we're in, and how do we actually clear out the buggy state?
 
-      ESP_LOGI(TAG, "[%s] Still waiting for first GATT notify event.", this->get_name().c_str());
+      ESP_LOGI(TAG, "Still waiting for first GATT notify event.");
       this->set_notify_(false);
     } else if (diff > NOTIFY_WARN_THRESHOLD) {
-      ESP_LOGW(TAG, "[%s] Last GATT notify was %d seconds ago.", this->get_name().c_str(), diff / 1000);
+      ESP_LOGW(TAG, "Last GATT notify was %d seconds ago.", diff / 1000);
     }
 
     if (this->timeout_ > 0 && diff > this->timeout_ && this->parent()->enabled) {
-      ESP_LOGW(TAG, "[%s] Timed out after %d sec. Retrying...", this->get_name().c_str(), this->timeout_);
+      ESP_LOGW(TAG, "Timed out after %d sec. Retrying...", this->timeout_);
       this->parent()->set_enabled(false);
       this->parent()->set_enabled(true);
     }
