@@ -23,10 +23,10 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
 
     case ESP_GATTC_SEARCH_CMPL_EVT: {
       this->char_handle_ = 0;
-      auto *chr = this->parent()->get_characteristic(service_uuid_, sensors_read_characteristic_uuid_);
+      auto *chr = this->parent()->get_characteristic(service_uuid_, sensors_char_uuid_);
       if (chr == nullptr) {
         ESP_LOGW(TAG, "No sensor read characteristic found at service %s char %s", service_uuid_.to_string().c_str(),
-                 sensors_read_characteristic_uuid_.to_string().c_str());
+                 sensors_char_uuid_.to_string().c_str());
         break;
       }
       this->char_handle_ = chr->handle;
@@ -62,8 +62,8 @@ void PranaBLE::read_sensors_(uint8_t *value, uint16_t value_len) {
     ESP_LOGD(TAG, "Value len: %d", value_len);
     ESP_LOGD(TAG, "is_on: %d", value[10]);
     ESP_LOGD(TAG, "brightness: %d", value[10]);
-    ESP_LOGD(TAG, "speed_in: %d", data[30] / 10);
-    ESP_LOGD(TAG, "speed_out: %d", data[34] / 10);
+    ESP_LOGD(TAG, "speed_in: %d", value[30] / 10);
+    ESP_LOGD(TAG, "speed_out: %d", value[34] / 10);
 
   // Example data
   // [13:08:47][D][radon_eye_rd200:107]: result bytes: 5010 85EBB940 00000000 00000000 2200 2500 0000
@@ -139,7 +139,7 @@ void PranaBLE::write_query_message_() {
   ESP_LOGV(TAG, "writing 0x50 to write service");
   uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
   auto status = esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->char_handle_,
-                                               sizeof(request), &request, //ESP_GATT_WRITE_TYPE_NO_RSP,
+                                               sizeof(request), request, //ESP_GATT_WRITE_TYPE_NO_RSP,
                                                ESP_GATT_AUTH_REQ_NONE);
   if (status) {
     ESP_LOGW(TAG, "Error sending write request for sensor, status=%d", status);
@@ -158,7 +158,7 @@ void PranaBLE::dump_config() {
   ESP_LOGW(TAG, "Prana BLE");
 }
 
-PranaBLE::RadonEyeRD200()
+PranaBLE::PranaBLE()
     : PollingComponent(10000),
       service_uuid_(esp32_ble_tracker::ESPBTUUID::from_raw(SERVICE_UUID)),
       sensors_char_uuid_(esp32_ble_tracker::ESPBTUUID::from_raw(WRITE_CHARACTERISTIC_UUID)),
