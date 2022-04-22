@@ -23,7 +23,7 @@ static const espbt::ESPBTUUID BEDJET_STATUS_UUID = espbt::ESPBTUUID::from_raw("0
 static const espbt::ESPBTUUID BEDJET_COMMAND_UUID = espbt::ESPBTUUID::from_raw("0000cccc-0000-1000-8000-00805f9b34fb");
 //static const espbt::ESPBTUUID BEDJET_NAME_UUID = espbt::ESPBTUUID::from_raw("00002001-bed0-0080-aa55-4265644a6574");
 
-class Bedjet : public climate::Climate, public esphome::ble_client::BLEClientNode, public PollingComponent {
+class Bedjet : public esphome::ble_client::BLEClientNode, public PollingComponent {
  public:
   void setup() override;
   void update() override;

@@ -6,7 +6,6 @@
 namespace esphome {
 namespace prana_ble {
 
-using namespace esphome::climate;
 
 void Bedjet::dump_config() {
   ESP_LOGW("", "BedJet Climate", this);
