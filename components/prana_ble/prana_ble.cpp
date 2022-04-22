@@ -22,6 +22,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
     }
 
     case ESP_GATTC_SEARCH_CMPL_EVT: {
+      ESP_LOGW(TAG, "ESP_GATTC_SEARCH_CMPL_EVT");
       this->char_handle_ = 0;
       auto *chr = this->parent()->get_characteristic(service_uuid_, sensors_char_uuid_);
       if (chr == nullptr) {
