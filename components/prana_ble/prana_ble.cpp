@@ -144,7 +144,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       break;
     }
     case ESP_GATTC_NOTIFY_EVT: {
-      ESP_LOGW(TAG, "NOTIFY data %s, len %s", param->notify.value, param->notify.value_len);
+      ESP_LOGW(TAG, "NOTIFY data %s, len %d", param->notify.value, param->notify.value_len);
       if (param->notify.handle != this->char_handle_status_) {
         ESP_LOGW(TAG, " Unexpected notify handle, wanted %04X, got %04X", this->char_handle_status_, param->notify.handle);
         break;
