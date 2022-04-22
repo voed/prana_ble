@@ -14,16 +14,6 @@ void Bedjet::dump_config() {
 void Bedjet::setup() {
 
 
-  // restore set points
-  auto restore = this->restore_state_();
-  if (restore.has_value()) {
-    ESP_LOGI(TAG, "Restored previous saved state.");
-    restore->apply(this);
-  } else {
-    // Initial status is unknown until we connect
-    this->reset_state_();
-  }
-
 #ifdef USE_TIME
   this->setup_time_();
 #endif
