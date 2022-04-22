@@ -46,7 +46,7 @@ class Bedjet : public esphome::ble_client::BLEClientNode, public PollingComponen
   static const uint32_t DEFAULT_STATUS_TIMEOUT = 900000;
 
   uint8_t set_notify_(bool enable);
-
+  uint8_t write_bedjet_packet_();
   uint32_t last_notify_ = 0;
   bool force_refresh_ = false;
 

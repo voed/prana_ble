@@ -182,8 +182,9 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
           this->update();
           this->force_refresh_ = false;
         }
-      */
       }
+      */
+
       break;
     }
     default:
