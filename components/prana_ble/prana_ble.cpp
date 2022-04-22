@@ -208,7 +208,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
  */
 uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
   auto handle = this->config_descr_status_;
-  /*if (handle == 0) {
+  if (handle == 0) {
     ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", this->char_handle_status_);
     return -1;
   }
@@ -224,7 +224,7 @@ uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
     return status;
   }
   ESP_LOGD(TAG, "wrote notify=%s to status config 0x%04x", enable ? "true" : "false",
-           handle);*/
+           handle);
   return ESP_GATT_OK;
 }
 
