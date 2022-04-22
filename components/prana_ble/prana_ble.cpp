@@ -36,7 +36,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
 
       write_query_message_();
 
-      request_read_values_();
+      //request_read_values_();
       break;
     }
     case ESP_GATTC_NOTIFY_EVT: {
