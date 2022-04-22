@@ -2,10 +2,8 @@
 
 #include "esphome/components/ble_client/ble_client.h"
 #include "esphome/components/esp32_ble_tracker/esp32_ble_tracker.h"
-#include "esphome/components/climate/climate.h"
 #include "esphome/core/component.h"
 #include "esphome/core/hal.h"
-#include "bedjet_base.h"
 
 #ifdef USE_TIME
 #include "esphome/components/time/real_time_clock.h"
