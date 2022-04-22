@@ -13,15 +13,15 @@ from esphome.const import (
 DEPENDENCIES = ["ble_client"]
 
 prana_ble_ns = cg.esphome_ns.namespace("prana_ble")
-Bedjet = prana_ble_ns.class_(                                   //
-    "Bedjet", ble_client.BLEClientNode, cg.PollingComponent     //
+Bedjet = prana_ble_ns.class_(                                  
+    "Bedjet", ble_client.BLEClientNode, cg.PollingComponent    
 )
 
 
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
-            cv.GenerateID(): cv.declare_id(Bedjet),             //
+            cv.GenerateID(): cv.declare_id(Bedjet),    
         }
     )
     .extend(cv.polling_component_schema("1min"))
