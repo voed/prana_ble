@@ -8,7 +8,7 @@ namespace prana_ble {
 
 
 void Bedjet::dump_config() {
-  ESP_LOGW("", "BedJet Climate", this);
+  ESP_LOGW("", "BedJet Climate");
 }
 
 void Bedjet::setup() {
@@ -64,11 +64,6 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
 
       this->set_notify_(true);
 
-#ifdef USE_TIME
-      if (this->time_id_.has_value()) {
-        this->send_local_time_();
-      }
-#endif
       break;
     }
     case ESP_GATTC_WRITE_DESCR_EVT: {
@@ -276,8 +271,7 @@ void Bedjet::update() {
     return;
   }
 
-  auto result = this->update_status_();
-  if (!result) {
+
     uint32_t now = millis();
     uint32_t diff = now - this->last_notify_;
 
@@ -298,7 +292,7 @@ void Bedjet::update() {
       this->parent()->set_enabled(false);
       this->parent()->set_enabled(true);
     }
-  }
+  
 }
 
 }  // namespace bedjet
