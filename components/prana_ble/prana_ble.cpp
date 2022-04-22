@@ -39,7 +39,30 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       //request_read_values_();
       break;
     }
-    case ESP_GATTC_WRITE_CHAR_EVT: {
+    case ESP_GATTC_NOTIFY_EVT: {
+      if (param->notify.is_notify){
+          ESP_LOGI(TAG, "ESP_GATTC_NOTIFY_EVT, receive notify value:");
+      }else{
+          ESP_LOGI(TAG, "ESP_GATTC_NOTIFY_EVT, receive indicate value:");
+      }
+      esp_log_buffer_hex(TAG, param->notify.value, param->notify.value_len);
+      break;
+    }
+    /*case ESP_GATTC_WRITE_CHAR_EVT: {
+      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
+      if (param->read.conn_id != this->parent()->conn_id)
+        break;
+      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
+      if (param->read.status != ESP_GATT_OK) {
+        ESP_LOGW(TAG, "Data %d, len %d", param->read.value[10], param->read.value_len);
+        break;
+      }
+      if (param->read.handle == this->char_handle_) {
+        read_sensors_(param->read.value, param->read.value_len);//write
+      }
+      break;
+    }*/
+    /*case ESP_GATTC_READ_CHAR_EVT: {
       ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
       if (param->read.conn_id != this->parent()->conn_id)
         break;
@@ -52,21 +75,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         read_sensors_(param->read.value, param->read.value_len);
       }
       break;
-    }
-    case ESP_GATTC_READ_CHAR_EVT: {
-      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
-      if (param->read.conn_id != this->parent()->conn_id)
-        break;
-      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
-      if (param->read.status != ESP_GATT_OK) {
-        ESP_LOGW(TAG, "Data %d, len %d", param->read.value[10], param->read.value_len);
-        break;
-      }
-      if (param->read.handle == this->char_handle_) {
-        read_sensors_(param->read.value, param->read.value_len);
-      }
-      break;
-    }
+    }*/
 
     default:
       break;
