@@ -1,195 +1,320 @@
 #include "prana_ble.h"
+#include "esphome/core/log.h"
 
 #ifdef USE_ESP32
 
 namespace esphome {
 namespace prana_ble {
 
+using namespace esphome::climate;
 
-void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if,
-                                        esp_ble_gattc_cb_param_t *param) {
+void Bedjet::dump_config() {
+  ESP_LOGW("", "BedJet Climate", this);
+}
+
+void Bedjet::setup() {
+  this->codec_ = make_unique<BedjetCodec>();
+
+  // restore set points
+  auto restore = this->restore_state_();
+  if (restore.has_value()) {
+    ESP_LOGI(TAG, "Restored previous saved state.");
+    restore->apply(this);
+  } else {
+    // Initial status is unknown until we connect
+    this->reset_state_();
+  }
+
+#ifdef USE_TIME
+  this->setup_time_();
+#endif
+}
+
+
+void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param) {
   switch (event) {
-    case ESP_GATTC_OPEN_EVT: {
-      if (param->open.status == ESP_GATT_OK) {
-        ESP_LOGI(TAG, "Connected successfully!");
-      }
-      break;
-    }
-
     case ESP_GATTC_DISCONNECT_EVT: {
-      ESP_LOGW(TAG, "Disconnected!");
+      ESP_LOGV(TAG, "Disconnected: reason=%d", param->disconnect.reason);
+      this->status_set_warning();
       break;
     }
-
     case ESP_GATTC_SEARCH_CMPL_EVT: {
-      ESP_LOGW(TAG, "ESP_GATTC_SEARCH_CMPL_EVT");
-      this->char_handle_ = 0;
-      auto *chr = this->parent()->get_characteristic(service_uuid_, sensors_char_uuid_);
+      auto *chr = this->parent_->get_characteristic(BEDJET_SERVICE_UUID, BEDJET_COMMAND_UUID);
       if (chr == nullptr) {
-        ESP_LOGW(TAG, "No sensor read characteristic found at service %s char %s", service_uuid_.to_string().c_str(),
-                 sensors_char_uuid_.to_string().c_str());
+        ESP_LOGW(TAG, "[%s] No control service found at device, not a BedJet..?", this->get_name().c_str());
         break;
       }
-      this->char_handle_ = chr->handle;
+      this->char_handle_cmd_ = chr->handle;
 
-      this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
+      chr = this->parent_->get_characteristic(BEDJET_SERVICE_UUID, BEDJET_STATUS_UUID);
+      if (chr == nullptr) {
+        ESP_LOGW(TAG, "[%s] No status service found at device, not a BedJet..?", this->get_name().c_str());
+        break;
+      }
 
-      write_query_message_();
+      this->char_handle_status_ = chr->handle;
+      // We also need to obtain the config descriptor for this handle.
+      // Otherwise once we set node_state=Established, the parent will flush all handles/descriptors, and we won't be
+      // able to look it up.
+      auto *descr = this->parent_->get_config_descriptor(this->char_handle_status_);
+      if (descr == nullptr) {
+        ESP_LOGW(TAG, "No config descriptor for status handle 0x%x. Will not be able to receive status notifications",
+                 this->char_handle_status_);
+      } else if (descr->uuid.get_uuid().len != ESP_UUID_LEN_16 ||
+                 descr->uuid.get_uuid().uuid.uuid16 != ESP_GATT_UUID_CHAR_CLIENT_CONFIG) {
+        ESP_LOGW(TAG, "Config descriptor 0x%x (uuid %s) is not a client config char uuid", this->char_handle_status_,
+                 descr->uuid.to_string().c_str());
+      } else {
+        this->config_descr_status_ = descr->handle;
+      }
 
-      //request_read_values_();
+
+
+      ESP_LOGD(TAG, "Services complete: obtained char handles.");
+      this->node_state = espbt::ClientState::ESTABLISHED;
+
+      this->set_notify_(true);
+
+#ifdef USE_TIME
+      if (this->time_id_.has_value()) {
+        this->send_local_time_();
+      }
+#endif
+      break;
+    }
+    case ESP_GATTC_WRITE_DESCR_EVT: {
+      if (param->write.status != ESP_GATT_OK) {
+        // ESP_GATT_INVALID_ATTR_LEN
+        ESP_LOGW(TAG, "Error writing descr at handle 0x%04d, status=%d", param->write.handle, param->write.status);
+        break;
+      }
+      // [16:44:44][V][bedjet:279]: [JOENJET] Register for notify event success: h=0x002a s=0
+      // This might be the enable-notify descriptor? (or disable-notify)
+      ESP_LOGV(TAG, "[%s] Write to handle 0x%04x status=%d", this->get_name().c_str(), param->write.handle,
+               param->write.status);
+      break;
+    }
+    case ESP_GATTC_WRITE_CHAR_EVT: {
+      if (param->write.status != ESP_GATT_OK) {
+        ESP_LOGW(TAG, "Error writing char at handle 0x%04d, status=%d", param->write.handle, param->write.status);
+        break;
+      }
+      if (param->write.handle == this->char_handle_cmd_) {
+        if (this->force_refresh_) {
+          // Command write was successful. Publish the pending state, hoping that notify will kick in.
+          this->publish_state();
+        }
+      }
+      break;
+    }
+    case ESP_GATTC_READ_CHAR_EVT: {
+      if (param->read.conn_id != this->parent_->conn_id)
+        break;
+      if (param->read.status != ESP_GATT_OK) {
+        ESP_LOGW(TAG, "Error reading char at handle %d, status=%d", param->read.handle, param->read.status);
+        break;
+      }
+      if (param->read.handle == this->char_handle_status_) {
+        ESP_LOGW(TAG, "Read len %d", param->read.value_len);
+        // This is the additional packet that doesn't fit in the notify packet.
+        //this->codec_->decode_extra(param->read.value, param->read.value_len);
+      } 
+      break;
+    }
+    case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
+      // This event means that ESP received the request to enable notifications on the client side. But we also have to
+      // tell the server that we want it to send notifications. Normally BLEClient parent would handle this
+      // automatically, but as soon as we set our status to Established, the parent is going to purge all the
+      // service/char/descriptor handles, and then get_config_descriptor() won't work anymore. There's no way to disable
+      // the BLEClient parent behavior, so our only option is to write the handle anyway, and hope a double-write
+      // doesn't break anything.
+
+      if (param->reg_for_notify.handle != this->char_handle_status_) {
+        ESP_LOGW(TAG, "[%s] Register for notify on unexpected handle 0x%04x, expecting 0x%04x",
+                 this->get_name().c_str(), param->reg_for_notify.handle, this->char_handle_status_);
+        break;
+      }
+
+      this->write_notify_config_descriptor_(true);
+      this->last_notify_ = 0;
+      this->force_refresh_ = true;
+      break;
+    }
+    case ESP_GATTC_UNREG_FOR_NOTIFY_EVT: {
+      // This event is not handled by the parent BLEClient, so we need to do this either way.
+      if (param->unreg_for_notify.handle != this->char_handle_status_) {
+        ESP_LOGW(TAG, "[%s] Unregister for notify on unexpected handle 0x%04x, expecting 0x%04x",
+                 this->get_name().c_str(), param->unreg_for_notify.handle, this->char_handle_status_);
+        break;
+      }
+
+      this->write_notify_config_descriptor_(false);
+      this->last_notify_ = 0;
+      // Now we wait until the next update() poll to re-register notify...
       break;
     }
     case ESP_GATTC_NOTIFY_EVT: {
-      if (param->notify.is_notify){
-          ESP_LOGI(TAG, "ESP_GATTC_NOTIFY_EVT, receive notify value:");
-      }else{
-          ESP_LOGI(TAG, "ESP_GATTC_NOTIFY_EVT, receive indicate value:");
-      }
-      esp_log_buffer_hex(TAG, param->notify.value, param->notify.value_len);
-      break;
-    }
-    /*case ESP_GATTC_WRITE_CHAR_EVT: {
-      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->write.handle, param->write.status);
-      if (param->write.conn_id != this->parent()->conn_id)
-        break;
-      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->write.handle, param->write.status);
-      if (param->write.status != ESP_GATT_OK) {
-        ESP_LOGW(TAG, "Data %d, len %d", param->write.value[10], param->write.value_len);
+      if (param->notify.handle != this->char_handle_status_) {
+        ESP_LOGW(TAG, "[%s] Unexpected notify handle, wanted %04X, got %04X", this->get_name().c_str(),
+                 this->char_handle_status_, param->notify.handle);
         break;
       }
-      if (param->write.handle == this->char_handle_) {
-        read_sensors_(param->write.value, param->write.value_len);//write
-      }
-      break;
-    }*/
-    case ESP_GATTC_READ_CHAR_EVT: {
-      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
-      if (param->read.conn_id != this->parent()->conn_id)
-        break;
-      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
-      if (param->read.status != ESP_GATT_OK) {
-        ESP_LOGW(TAG, "Data %d, len %d", param->read.value[10], param->read.value_len);
-        break;
-      }
-      if (param->read.handle == this->char_handle_) {
-        read_sensors_(param->read.value, param->read.value_len);
-      }
-      break;
-    }
+      write_bedjet_packet_()
+      // FIXME: notify events come in every ~200-300 ms, which is too fast to be helpful. So we
+      //  throttle the updates to once every MIN_NOTIFY_THROTTLE (5 seconds).
+      //  Another idea would be to keep notify off by default, and use update() as an opportunity to turn on
+      //  notify to get enough data to update status, then turn off notify again.
 
+
+      auto status = esp_ble_gattc_read_char(this->parent_->gattc_if, this->parent_->conn_id,
+                                                this->char_handle_status_, ESP_GATT_AUTH_REQ_NONE);
+          if (status) {
+            ESP_LOGI(TAG, "[%s] Unable to read extended status packet", this->get_name().c_str());
+          }
+
+
+ /*      uint32_t now = millis();
+      auto delta = now - this->last_notify_;
+
+      if (this->last_notify_ == 0 || delta > MIN_NOTIFY_THROTTLE || this->force_refresh_) {
+
+        this->last_notify_ = now;
+
+
+
+       if (needs_extra) {
+          // this means the packet was partial, so read the status characteristic to get the second part.
+          auto status = esp_ble_gattc_read_char(this->parent_->gattc_if, this->parent_->conn_id,
+                                                this->char_handle_status_, ESP_GATT_AUTH_REQ_NONE);
+          if (status) {
+            ESP_LOGI(TAG, "[%s] Unable to read extended status packet", this->get_name().c_str());
+          }
+        }
+
+        if (this->force_refresh_) {
+          // If we requested an immediate update, do that now.
+          this->update();
+          this->force_refresh_ = false;
+        }
+      */
+      }
+      break;
+    }
     default:
+      ESP_LOGVV(TAG, "[%s] gattc unhandled event: enum=%d", this->get_name().c_str(), event);
       break;
   }
 }
 
-void PranaBLE::read_sensors_(uint8_t *value, uint16_t value_len) {
+/** Reimplementation of BLEClient.gattc_event_handler() for ESP_GATTC_REG_FOR_NOTIFY_EVT.
+ *
+ * This is a copy of ble_client's automatic handling of `ESP_GATTC_REG_FOR_NOTIFY_EVT`, in order
+ * to undo the same on unregister. It also allows us to maintain the config descriptor separately,
+ * since the parent BLEClient is going to purge all descriptors once we set our connection status
+ * to `Established`.
+ */
+uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
+  auto handle = this->config_descr_status_;
+  if (handle == 0) {
+    ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", this->char_handle_status_);
+    return -1;
+  }
 
-    ESP_LOGD(TAG, "Value len: %d", value_len);
-    ESP_LOGD(TAG, "is_on: %d", value[10]);
-    ESP_LOGD(TAG, "brightness: %d", value[10]);
-    ESP_LOGD(TAG, "speed_in: %d", value[30] / 10);
-    ESP_LOGD(TAG, "speed_out: %d", value[34] / 10);
+  // NOTE: BLEClient uses `uint8_t*` of length 1, but BLE spec requires 16 bits.
+  uint8_t notify_en[] = {0, 0};
+  notify_en[0] = enable;
+  auto status =
+      esp_ble_gattc_write_char_descr(this->parent_->gattc_if, this->parent_->conn_id, handle, sizeof(notify_en),
+                                     &notify_en[0], ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
+  if (status) {
+    ESP_LOGW(TAG, "esp_ble_gattc_write_char_descr error, status=%d", status);
+    return status;
+  }
+  ESP_LOGD(TAG, "[%s] wrote notify=%s to status config 0x%04x", this->get_name().c_str(), enable ? "true" : "false",
+           handle);
+  return ESP_GATT_OK;
+}
 
-  // Example data
-  // [13:08:47][D][radon_eye_rd200:107]: result bytes: 5010 85EBB940 00000000 00000000 2200 2500 0000
-  /*ESP_LOGV(TAG, "result bytes: %02X%02X %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X %02X%02X %02X%02X",
-           value[0], value[1], value[2], value[3], value[4], value[5], value[6], value[7], value[8], value[9],
-           value[10], value[11], value[12], value[13], value[14], value[15], value[16], value[17], value[18],
-           value[19]);*/
 
- /* if (value[0] != 0x50) {
-    // This isn't a sensor reading.
+/** Writes one BedjetPacket to the BLE client on the BEDJET_COMMAND_UUID. */
+uint8_t Bedjet::write_bedjet_packet_()//(BedjetPacket *pkt) {
+  if (this->node_state != espbt::ClientState::ESTABLISHED) {
+    if (!this->parent_->enabled) {
+      ESP_LOGI(TAG, "[%s] Cannot write packet: Not connected, enabled=false", this->get_name().c_str());
+    } else {
+      ESP_LOGW(TAG, "[%s] Cannot write packet: Not connected", this->get_name().c_str());
+    }
+    return -1;
+  }
+
+  uint8_t cmd[] = { 0xBE, 0xEF, 0x04, 0x0C };
+  auto status = esp_ble_gattc_write_char(this->parent_->gattc_if, this->parent_->conn_id, this->char_handle_cmd_,
+                                         sizeof(cmd), cmd, ESP_GATT_WRITE_TYPE_NO_RSP,
+                                         ESP_GATT_AUTH_REQ_NONE);
+  return status;
+}
+
+/** Configures the local ESP BLE client to register (`true`) or unregister (`false`) for status notifications. */
+uint8_t Bedjet::set_notify_(const bool enable) {
+  uint8_t status;
+  if (enable) {
+    status = esp_ble_gattc_register_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
+                                               this->char_handle_status_);
+    if (status) {
+      ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d", this->get_name().c_str(), status);
+    }
+  } else {
+    status = esp_ble_gattc_unregister_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
+                                                 this->char_handle_status_);
+    if (status) {
+      ESP_LOGW(TAG, "[%s] esp_ble_gattc_unregister_for_notify failed, status=%d", this->get_name().c_str(), status);
+    }
+  }
+  ESP_LOGV(TAG, "[%s] set_notify: enable=%d; result=%d", this->get_name().c_str(), enable, status);
+  return status;
+}
+
+
+void Bedjet::update() {
+  ESP_LOGV(TAG, "[%s] update()", this->get_name().c_str());
+
+  if (this->node_state != espbt::ClientState::ESTABLISHED) {
+    if (!this->parent()->enabled) {
+      ESP_LOGD(TAG, "[%s] Not connected, because enabled=false", this->get_name().c_str());
+    } else {
+      // Possibly still trying to connect.
+      ESP_LOGD(TAG, "[%s] Not connected, enabled=true", this->get_name().c_str());
+    }
+
     return;
   }
 
-  // Convert from pCi/L to Bq/m³
-  constexpr float convert_to_bwpm3 = 37.0;
+  auto result = this->update_status_();
+  if (!result) {
+    uint32_t now = millis();
+    uint32_t diff = now - this->last_notify_;
 
-  RadonValue radon_value;
-  radon_value.chars[0] = value[2];
-  radon_value.chars[1] = value[3];
-  radon_value.chars[2] = value[4];
-  radon_value.chars[3] = value[5];
-  float radon_now = radon_value.number * convert_to_bwpm3;
-  if (is_valid_radon_value_(radon_now)) {
-    radon_sensor_->publish_state(radon_now);
-  }
+    if (this->last_notify_ == 0) {
+      // This means we're connected and haven't received a notification, so it likely means that the BedJet is off.
+      // However, it could also mean that it's running, but failing to send notifications.
+      // We can try to unregister for notifications now, and then re-register, hoping to clear it up...
+      // But how do we know for sure which state we're in, and how do we actually clear out the buggy state?
 
-  radon_value.chars[0] = value[6];
-  radon_value.chars[1] = value[7];
-  radon_value.chars[2] = value[8];
-  radon_value.chars[3] = value[9];
-  float radon_day = radon_value.number * convert_to_bwpm3;
+      ESP_LOGI(TAG, "[%s] Still waiting for first GATT notify event.", this->get_name().c_str());
+      this->set_notify_(false);
+    } else if (diff > NOTIFY_WARN_THRESHOLD) {
+      ESP_LOGW(TAG, "[%s] Last GATT notify was %d seconds ago.", this->get_name().c_str(), diff / 1000);
+    }
 
-  radon_value.chars[0] = value[10];
-  radon_value.chars[1] = value[11];
-  radon_value.chars[2] = value[12];
-  radon_value.chars[3] = value[13];
-  float radon_month = radon_value.number * convert_to_bwpm3;
-
-  if (is_valid_radon_value_(radon_month)) {
-    ESP_LOGV(TAG, "Radon Long Term based on month");
-    radon_long_term_sensor_->publish_state(radon_month);
-  } else if (is_valid_radon_value_(radon_day)) {
-    ESP_LOGV(TAG, "Radon Long Term based on day");
-    radon_long_term_sensor_->publish_state(radon_day);
-  }
-
-  ESP_LOGV(TAG, "  Measurements (Bq/m³) now: %0.03f, day: %0.03f, month: %0.03f", radon_now, radon_day, radon_month);
-
-  ESP_LOGV(TAG, "  Measurements (pCi/L) now: %0.03f, day: %0.03f, month: %0.03f", radon_now / convert_to_bwpm3,
-           radon_day / convert_to_bwpm3, radon_month / convert_to_bwpm3);
-
-  // This instance must not stay connected
-  // so other clients can connect to it (e.g. the
-  // mobile app).*/
-  parent()->set_enabled(false);
-}
-
-bool PranaBLE::is_valid_radon_value_(float radon) { return radon > 0.0 and radon < 37000; }
-
-void PranaBLE::update() {
-  if (this->node_state != esp32_ble_tracker::ClientState::ESTABLISHED) {
-    if (!parent()->enabled) {
-      ESP_LOGW(TAG, "Reconnecting to device");
-      parent()->set_enabled(true);
-      parent()->connect();
-    } else {
-      ESP_LOGW(TAG, "Connection in progress");
+    if (this->timeout_ > 0 && diff > this->timeout_ && this->parent()->enabled) {
+      ESP_LOGW(TAG, "[%s] Timed out after %d sec. Retrying...", this->get_name().c_str(), this->timeout_);
+      this->parent()->set_enabled(false);
+      this->parent()->set_enabled(true);
     }
   }
 }
 
-void PranaBLE::write_query_message_() {
-  ESP_LOGW(TAG, "writing 0x50 to write service");
-  //uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
-  uint8_t request[] = { 0xBE, 0xEF, 0x04, 0x0C };
-  auto status = esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->char_handle_,
-                                               sizeof(request), request, ESP_GATT_WRITE_TYPE_NO_RSP,
-                                               ESP_GATT_AUTH_REQ_NONE);
-  if (status) {
-    ESP_LOGW(TAG, "Error sending write request for sensor, status=%d", status);
-  }
-}
-
-void PranaBLE::request_read_values_() {
-  auto status = esp_ble_gattc_read_char(this->parent()->gattc_if, this->parent()->conn_id, this->char_handle_,
-                                        ESP_GATT_AUTH_REQ_NONE);
-  if (status) {
-    ESP_LOGW(TAG, "Error sending read request for sensor, status=%d", status);
-  }
-}
-
-void PranaBLE::dump_config() {
-  ESP_LOGW(TAG, "Prana BLE");
-}
-
-PranaBLE::PranaBLE()
-    : PollingComponent(10000),
-      service_uuid_(esp32_ble_tracker::ESPBTUUID::from_raw(SERVICE_UUID)),
-      sensors_char_uuid_(esp32_ble_tracker::ESPBTUUID::from_raw(RW_CHARACTERISTIC_UUID)) {}
-
-}  // namespace prana_ble
+}  // namespace bedjet
 }  // namespace esphome
 
-#endif  // USE_ESP32
+#endif
