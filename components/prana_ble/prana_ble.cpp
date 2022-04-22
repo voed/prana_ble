@@ -36,7 +36,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       }
       this->char_handle_cmd_ = chr->handle;
 
-      chr = this->parent_->get_characteristic(BEDJET_SERVICE_UUID, BEDJET_STATUS_UUID);
+      chr = this->parent_->get_characteristic(BEDJET_SERVICE_UUID, BEDJET_COMMAND_UUID);
       if (chr == nullptr) {
         ESP_LOGW(TAG, " No status service found at device, not a BedJet..?");
         break;
@@ -46,7 +46,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       // We also need to obtain the config descriptor for this handle.
       // Otherwise once we set node_state=Established, the parent will flush all handles/descriptors, and we won't be
       // able to look it up.
-      auto *descr = this->parent_->get_config_descriptor(this->char_handle_status_);
+      auto *descr = chr->get_descriptor(0x2902);//this->parent_->get_config_descriptor(this->char_handle_status_);
       if (descr == nullptr) {
         ESP_LOGW(TAG, "No config descriptor for status handle 0x%x. Will not be able to receive status notifications",
                  this->char_handle_status_);
