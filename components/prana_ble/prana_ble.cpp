@@ -84,6 +84,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       break;
     }
     case ESP_GATTC_WRITE_CHAR_EVT: {
+      ESP_LOGW(TAG, "Writing char at handle 0x%04d, status=%d", param->write.handle, param->write.status);
       if (param->write.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "Error writing char at handle 0x%04d, status=%d", param->write.handle, param->write.status);
         break;
@@ -97,6 +98,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       break;
     }
     case ESP_GATTC_READ_CHAR_EVT: {
+      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
       if (param->read.conn_id != this->parent_->conn_id)
         break;
       if (param->read.status != ESP_GATT_OK) {
