@@ -68,7 +68,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       this->set_notify_(true);
       //this->write_notify_config_descriptor_(true);
 
-
+      this->write_notify_config_descriptor_(true);
 
 
       break;
@@ -131,7 +131,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
         break;
       }
 
-      this->write_notify_config_descriptor_(true);
+      
       this->last_notify_ = 0;
       this->force_refresh_ = true;
       write_bedjet_packet_();
