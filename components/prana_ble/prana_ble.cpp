@@ -66,7 +66,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
 
       
       this->set_notify_(true);
-      this->write_notify_config_descriptor_(true);
+      //this->write_notify_config_descriptor_(true);
 
 
 
@@ -84,7 +84,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       ESP_LOGV(TAG, "Write to handle 0x%04x status=%d", param->write.handle,
                param->write.status);
 
-      write_bedjet_packet_();
+
       break;
     }
     case ESP_GATTC_WRITE_CHAR_EVT: {
@@ -117,6 +117,8 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       break;
     }
     case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
+
+      ESP_LOGW(TAG, "ESP_GATTC_REG_FOR_NOTIFY_EVT");
       // This event means that ESP received the request to enable notifications on the client side. But we also have to
       // tell the server that we want it to send notifications. Normally BLEClient parent would handle this
       // automatically, but as soon as we set our status to Established, the parent is going to purge all the
@@ -245,7 +247,7 @@ uint8_t Bedjet::write_bedjet_packet_(){//(BedjetPacket *pkt) {
   ESP_LOGW(TAG, "Writing command %s %i", cmd, sizeof(cmd));
   
   auto status = esp_ble_gattc_write_char(this->parent_->gattc_if, this->parent_->conn_id, this->char_handle_cmd_,
-                                         sizeof(cmd), cmd, ESP_GATT_WRITE_TYPE_RSP,
+                                         sizeof(cmd), cmd, ESP_GATT_WRITE_TYPE_NO_RSP,
                                          ESP_GATT_AUTH_REQ_NONE);
 
   return status;
@@ -256,13 +258,13 @@ uint8_t Bedjet::set_notify_(const bool enable) {
   uint8_t status;
   if (enable) {
     status = esp_ble_gattc_register_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
-                                               this->char_handle_status_);
+                                               this->config_descr_status_);
     if (status) {
       ESP_LOGW(TAG, "esp_ble_gattc_register_for_notify failed, status=%d", status);
     }
   } else {
     status = esp_ble_gattc_unregister_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
-                                                 this->char_handle_status_);
+                                                 this->config_descr_status_);
     if (status) {
       ESP_LOGW(TAG, "esp_ble_gattc_unregister_for_notify failed, status=%d", status);
     }
