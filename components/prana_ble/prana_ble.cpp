@@ -245,7 +245,7 @@ uint8_t Bedjet::write_bedjet_packet_(){//(BedjetPacket *pkt) {
   ESP_LOGW(TAG, "Writing command %s %i", cmd, sizeof(cmd));
   
   auto status = esp_ble_gattc_write_char(this->parent_->gattc_if, this->parent_->conn_id, this->char_handle_cmd_,
-                                         sizeof(cmd), cmd, ESP_GATT_WRITE_TYPE_NO_RSP,
+                                         sizeof(cmd), cmd, ESP_GATT_WRITE_TYPE_RSP,
                                          ESP_GATT_AUTH_REQ_NONE);
 
   return status;
