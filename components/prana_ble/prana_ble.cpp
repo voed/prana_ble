@@ -66,7 +66,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
 
       
       this->set_notify_(true);
-
+      this->write_notify_config_descriptor_(true);
 
 
 
@@ -83,6 +83,8 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       // This might be the enable-notify descriptor? (or disable-notify)
       ESP_LOGV(TAG, "Write to handle 0x%04x status=%d", param->write.handle,
                param->write.status);
+
+      write_bedjet_packet_();
       break;
     }
     case ESP_GATTC_WRITE_CHAR_EVT: {
