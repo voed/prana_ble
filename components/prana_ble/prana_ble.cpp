@@ -141,7 +141,7 @@ void PranaBLE::read_sensors_(uint8_t *value, uint16_t value_len) {
   // This instance must not stay connected
   // so other clients can connect to it (e.g. the
   // mobile app).*/
-  parent()->set_enabled(false);
+  //parent()->set_enabled(false);
 }
 
 bool PranaBLE::is_valid_radon_value_(float radon) { return radon > 0.0 and radon < 37000; }
