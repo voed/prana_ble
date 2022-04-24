@@ -40,6 +40,12 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       break;
     }
     case ESP_GATTC_NOTIFY_EVT: {
+      ESP_LOGW(TAG, "NOTIFY len %d", param->notify.value_len);
+      if(param->notify.value_len > 0)
+        ESP_LOGW(TAG, "NOTIFY 0 %d", param->notify.value[0]);
+      
+      if(param->notify.value_len > 10)
+        ESP_LOGW(TAG, "NOTIFY 0 %d", param->notify.value[10]);
       if (param->notify.is_notify){
           ESP_LOGW(TAG, "ESP_GATTC_NOTIFY_EVT, receive notify value:");
       }else{
@@ -167,7 +173,7 @@ void PranaBLE::write_notify_message_() {
 void PranaBLE::write_query_message_() {
   ESP_LOGW(TAG, "writing 0x50 to write service");
   //uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
-  uint8_t request[] = { 0xBE, 0xEF, 0x04, 0x0C };
+  uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A }; //{ 0xBE, 0xEF, 0x04, 0x0C };
   auto status = esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->char_handle_,
                                                sizeof(request), request, ESP_GATT_WRITE_TYPE_NO_RSP,
                                                ESP_GATT_AUTH_REQ_NONE);
