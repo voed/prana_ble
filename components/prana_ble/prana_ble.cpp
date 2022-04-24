@@ -5,6 +5,12 @@
 namespace esphome {
 namespace prana_ble {
 
+void PranaBLE::update() {
+  if (this->node_state != espbt::ClientState::ESTABLISHED)
+    return;
+  write_query_message_();
+  
+}
 
 void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if,
                                         esp_ble_gattc_cb_param_t *param) {
@@ -32,12 +38,20 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       }
       this->char_handle_ = chr->handle;
       set_notify_(true);
-      write_notify_message_();
-      this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
+      
+      
 
 
       
       //request_read_values_();
+      break;
+    }
+
+    case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
+      ESP_LOGW(TAG, "REG_FOR_NOTIFY")
+      this->node_state = espbt::ClientState::ESTABLISHED;
+      write_notify_message_();
+      this->update();
       break;
     }
     case ESP_GATTC_NOTIFY_EVT: {
