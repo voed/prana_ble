@@ -5,12 +5,7 @@
 namespace esphome {
 namespace prana_ble {
 
-void PranaBLE::update() {
-  if (this->node_state != espbt::ClientState::ESTABLISHED)
-    return;
-  write_query_message_();
-  
-}
+
 
 void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if,
                                         esp_ble_gattc_cb_param_t *param) {
@@ -226,6 +221,14 @@ void PranaBLE::request_read_values_() {
 
 void PranaBLE::dump_config() {
   ESP_LOGW(TAG, "Prana BLE");
+}
+
+
+void PranaBLE::update() {
+  if (this->node_state != espbt::ClientState::ESTABLISHED)
+    return;
+  write_query_message_();
+  
 }
 
 PranaBLE::PranaBLE()
