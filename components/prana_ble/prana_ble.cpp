@@ -31,10 +31,11 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         break;
       }
       this->char_handle_ = chr->handle;
-      write_notify_message_();
+
       this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
 
-      
+      set_notify_(true);
+      write_notify_message_();
       
       //request_read_values_();
       break;
@@ -156,6 +157,25 @@ void PranaBLE::update() {
       ESP_LOGW(TAG, "Connection in progress");
     }
   }
+}
+
+uint8_t PranaBLE::set_notify_(const bool enable) {
+  uint8_t status;
+  if (enable) {
+    status = esp_ble_gattc_register_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
+                                               this->char_handle_);
+    if (status) {
+      ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d", this->get_name().c_str(), status);
+    }
+  } else {
+    status = esp_ble_gattc_unregister_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
+                                                 this->char_handle_);
+    if (status) {
+      ESP_LOGW(TAG, "[%s] esp_ble_gattc_unregister_for_notify failed, status=%d", this->get_name().c_str(), status);
+    }
+  }
+  ESP_LOGV(TAG, "[%s] set_notify: enable=%d; result=%d", this->get_name().c_str(), enable, status);
+  return status;
 }
 
 void PranaBLE::write_notify_message_() {
