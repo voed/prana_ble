@@ -62,14 +62,14 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       //this->write_notify_config_descriptor_(true);
       //write_bedjet_packet_();
       ESP_LOGD(TAG, "Services complete: obtained char handles. 0x%x %s ", this->char_handle_status_, descr->uuid.to_string().c_str());
-      this->node_state = espbt::ClientState::ESTABLISHED;
+      
 
       
       this->set_notify_(true);
       //this->write_notify_config_descriptor_(true);
 
       this->write_notify_config_descriptor_(true);
-
+      this->node_state = espbt::ClientState::ESTABLISHED;
 
       break;
     }
@@ -289,7 +289,7 @@ void Bedjet::update() {
   }
 
 
-    uint32_t now = millis();
+/*    uint32_t now = millis();
     uint32_t diff = now - this->last_notify_;
 
     if (this->last_notify_ == 0) {
@@ -308,7 +308,7 @@ void Bedjet::update() {
       ESP_LOGW(TAG, "Timed out after %d sec. Retrying...", this->timeout_);
       this->parent()->set_enabled(false);
       this->parent()->set_enabled(true);
-    }
+    }*/
   
 }
 
