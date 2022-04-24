@@ -41,8 +41,8 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         break;
       }
 
-      
-      uint8_t notify_en = 1;
+      set_notify_(true);
+      uint8_t notify_en = 2;
       auto status = esp_ble_gattc_write_char_descr(this->parent()->gattc_if, this->parent()->conn_id, descr->handle, sizeof(notify_en),
                                                    &notify_en, ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
       
@@ -59,7 +59,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       ESP_LOGW(TAG, "REG_FOR_NOTIFY");
 
 
-      //write_notify_message_();
+      write_notify_message_();
       //vTaskDelay(500 / portTICK_PERIOD_MS);
       
       write_query_message_();
