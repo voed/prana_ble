@@ -22,6 +22,11 @@ void Bedjet::setup() {
 
 void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param) {
   switch (event) {
+
+    case ESP_GATTC_CONNECT_EVT: {
+      ESP_LOGW(TAG, "[%s] ESP_GATTC_CONNECT_EVT", this->address_str().c_str());
+
+    }
     case ESP_GATTC_DISCONNECT_EVT: {
       ESP_LOGV(TAG, "Disconnected: reason=%d", param->disconnect.reason);
       this->status_set_warning();
