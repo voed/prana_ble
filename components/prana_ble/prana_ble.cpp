@@ -71,7 +71,8 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
     }
     case ESP_GATTC_READ_CHAR_EVT: {
       ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
-      ESP_LOGW(TAG, "Data %d, len %d", param->read.value[0], param->read.value_len);
+      if(param->read.value_len > 0)
+        ESP_LOGW(TAG, "Data %d, len %d", param->read.value[0], param->read.value_len);
       if (param->read.conn_id != this->parent()->conn_id)
         break;
       ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
