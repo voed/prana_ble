@@ -165,16 +165,16 @@ uint8_t PranaBLE::set_notify_(const bool enable) {
     status = esp_ble_gattc_register_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
                                                this->char_handle_);
     if (status) {
-      ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d", this->get_name().c_str(), status);
+      ESP_LOGW(TAG, " esp_ble_gattc_register_for_notify failed, status=%d", status);
     }
   } else {
     status = esp_ble_gattc_unregister_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
                                                  this->char_handle_);
     if (status) {
-      ESP_LOGW(TAG, "[%s] esp_ble_gattc_unregister_for_notify failed, status=%d", this->get_name().c_str(), status);
+      ESP_LOGW(TAG, " esp_ble_gattc_unregister_for_notify failed, status=%d",  status);
     }
   }
-  ESP_LOGV(TAG, "[%s] set_notify: enable=%d; result=%d", this->get_name().c_str(), enable, status);
+  ESP_LOGV(TAG, " set_notify: enable=%d; result=%d", enable, status);
   return status;
 }
 
