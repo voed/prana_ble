@@ -36,6 +36,7 @@ class PranaBLE : public PollingComponent, public ble_client::BLEClientNode {
 
   void read_sensors_(uint8_t *value, uint16_t value_len);
   void write_query_message_();
+  void write_notify_message_();
   void request_read_values_();
 
   sensor::Sensor *radon_sensor_{nullptr};
