@@ -73,8 +73,8 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
       this->set_notify_(true);
       //this->write_notify_config_descriptor_(true);
 
-      this->write_notify_config_descriptor_(true);
-      this->node_state = espbt::ClientState::ESTABLISHED;
+      //this->write_notify_config_descriptor_(true);
+      //this->node_state = espbt::ClientState::ESTABLISHED;
 
       break;
     }
@@ -216,7 +216,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
  * to `Established`.
  */
 uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
-  auto handle = this->config_descr_status_;
+  auto handle = this->config_char_status_;
   if (handle == 0) {
     ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", this->config_descr_status_);
     return -1;
@@ -226,7 +226,7 @@ uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
   uint8_t notify_en[] = {0, 0};
   notify_en[0] = enable;
   auto status =
-      esp_ble_gattc_write_char_descr(this->parent_->gattc_if, this->parent_->conn_id, handle, sizeof(notify_en),
+      esp_ble_gattc_write_char(this->parent_->gattc_if, this->parent_->conn_id, handle, sizeof(notify_en),
                                      &notify_en[0], ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
   if (status) {
     ESP_LOGW(TAG, "esp_ble_gattc_write_char_descr error, status=%d", status);
@@ -263,13 +263,13 @@ uint8_t Bedjet::set_notify_(const bool enable) {
   uint8_t status;
   if (enable) {
     status = esp_ble_gattc_register_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
-                                               this->config_descr_status_);
+                                               this->config_char_status_);
     if (status) {
       ESP_LOGW(TAG, "esp_ble_gattc_register_for_notify failed, status=%d", status);
     }
   } else {
     status = esp_ble_gattc_unregister_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
-                                                 this->config_descr_status_);
+                                                 this->config_char_status_);
     if (status) {
       ESP_LOGW(TAG, "esp_ble_gattc_unregister_for_notify failed, status=%d", status);
     }
