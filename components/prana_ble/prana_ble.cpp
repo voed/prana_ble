@@ -34,34 +34,24 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
 
       this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
 
-      write_query_message_();
-
+      
+      write_notify_message_()
       //request_read_values_();
       break;
     }
     case ESP_GATTC_NOTIFY_EVT: {
       if (param->notify.is_notify){
-          ESP_LOGI(TAG, "ESP_GATTC_NOTIFY_EVT, receive notify value:");
+          ESP_LOGW(TAG, "ESP_GATTC_NOTIFY_EVT, receive notify value:");
       }else{
-          ESP_LOGI(TAG, "ESP_GATTC_NOTIFY_EVT, receive indicate value:");
+          ESP_LOGW(TAG, "ESP_GATTC_NOTIFY_EVT, receive indicate value:");
       }
       esp_log_buffer_hex(TAG, param->notify.value, param->notify.value_len);
       break;
     }
-    /*case ESP_GATTC_WRITE_CHAR_EVT: {
-      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->write.handle, param->write.status);
-      if (param->write.conn_id != this->parent()->conn_id)
-        break;
-      ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->write.handle, param->write.status);
-      if (param->write.status != ESP_GATT_OK) {
-        ESP_LOGW(TAG, "Data %d, len %d", param->write.value[10], param->write.value_len);
-        break;
-      }
-      if (param->write.handle == this->char_handle_) {
-        read_sensors_(param->write.value, param->write.value_len);//write
-      }
-      break;
-    }*/
+    case ESP_GATTC_WRITE_CHAR_EVT: {
+      ESP_LOGW(TAG, "Write char at handle %d, status=%d", param->write.handle, param->write.status);
+      write_query_message_();
+    }
     case ESP_GATTC_READ_CHAR_EVT: {
       ESP_LOGW(TAG, "Reading char at handle %d, status=%d", param->read.handle, param->read.status);
       if (param->read.conn_id != this->parent()->conn_id)
@@ -157,6 +147,18 @@ void PranaBLE::update() {
     } else {
       ESP_LOGW(TAG, "Connection in progress");
     }
+  }
+}
+
+void PranaBLE::write_notify_message_() {
+  ESP_LOGW(TAG, "writing 0x50 to write service");
+  //uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
+  uint8_t request[] = { 0x01, 0x00 };
+  auto status = esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->char_handle_,
+                                               sizeof(request), request, ESP_GATT_WRITE_TYPE_NO_RSP,
+                                               ESP_GATT_AUTH_REQ_NONE);
+  if (status) {
+    ESP_LOGW(TAG, "Error sending write request for sensor, status=%d", status);
   }
 }
 
