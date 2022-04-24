@@ -31,11 +31,11 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         break;
       }
       this->char_handle_ = chr->handle;
-
+      write_notify_message_();
       this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
 
       
-      write_notify_message_();
+      
       //request_read_values_();
       break;
     }
@@ -151,7 +151,7 @@ void PranaBLE::update() {
 }
 
 void PranaBLE::write_notify_message_() {
-  ESP_LOGW(TAG, "writing 0x50 to write service");
+  ESP_LOGW(TAG, "writing 0x01 to write service");
   //uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
   uint8_t request[] = { 0x01, 0x00 };
   auto status = esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->char_handle_,
