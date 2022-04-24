@@ -71,14 +71,14 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
 
       
       this->set_notify_(true);
-      //this->write_notify_config_descriptor_(true);
+      this->write_notify_config_descriptor_(true);
 
       //this->write_notify_config_descriptor_(true);
-      //this->node_state = espbt::ClientState::ESTABLISHED;
+      this->node_state = espbt::ClientState::ESTABLISHED;
 
       break;
     }
-    case ESP_GATTC_WRITE_DESCR_EVT: {
+/*    case ESP_GATTC_WRITE_DESCR_EVT: {
       if (param->write.status != ESP_GATT_OK) {
         // ESP_GATT_INVALID_ATTR_LEN
         ESP_LOGW(TAG, "Error writing descr at handle 0x%04d, status=%d", param->write.handle, param->write.status);
@@ -120,7 +120,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
         //this->codec_->decode_extra(param->read.value, param->read.value_len);
       } 
       break;
-    }
+    }*/
     case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
 
       ESP_LOGW(TAG, "ESP_GATTC_REG_FOR_NOTIFY_EVT");
