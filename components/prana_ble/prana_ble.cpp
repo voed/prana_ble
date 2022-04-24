@@ -32,12 +32,13 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         break;
       }
       this->char_handle_ = chr->handle;
-      set_notify_(true);
       
       
-      write_notify_message_();
+      
+      
       
       this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
+
       this->update();
       
       //request_read_values_();
@@ -173,6 +174,8 @@ void PranaBLE::update() {
     }
   }
   else
+    set_notify_(true);
+    write_notify_message_();
     write_query_message_();
 }
 
