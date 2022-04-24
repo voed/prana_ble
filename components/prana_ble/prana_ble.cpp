@@ -37,7 +37,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       
       
       
-      this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
+      
 
       this->update();
       
@@ -57,7 +57,9 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
                                                    &notify_en, ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
       //write_notify_message_();
       //vTaskDelay(500 / portTICK_PERIOD_MS);
+      this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
       write_query_message_();
+      
 
       break;
     }
