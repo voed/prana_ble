@@ -24,7 +24,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
   switch (event) {
 
     case ESP_GATTC_CONNECT_EVT: {
-      ESP_LOGW(TAG, "[%s] ESP_GATTC_CONNECT_EVT", this->address_str().c_str());
+      ESP_LOGW(TAG, "[] ESP_GATTC_CONNECT_EVT");
 
     }
     case ESP_GATTC_DISCONNECT_EVT: {
