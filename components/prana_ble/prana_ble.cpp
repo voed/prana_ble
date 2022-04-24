@@ -74,11 +74,13 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
 
 void PranaBLE::read_sensors_(uint8_t *value, uint16_t value_len) {
 
+
+    esp_log_buffer_hex(TAG, value, value_len);
     ESP_LOGD(TAG, "Value len: %d", value_len);
-    ESP_LOGD(TAG, "is_on: %d", value[10]);
+    /*ESP_LOGD(TAG, "is_on: %d", value[10]);
     ESP_LOGD(TAG, "brightness: %d", value[10]);
     ESP_LOGD(TAG, "speed_in: %d", value[30] / 10);
-    ESP_LOGD(TAG, "speed_out: %d", value[34] / 10);
+    ESP_LOGD(TAG, "speed_out: %d", value[34] / 10);*/
 
   // Example data
   // [13:08:47][D][radon_eye_rd200:107]: result bytes: 5010 85EBB940 00000000 00000000 2200 2500 0000
