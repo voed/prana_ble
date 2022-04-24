@@ -12,7 +12,7 @@ void Bedjet::dump_config() {
 }
 
 void Bedjet::setup() {
-
+      parent()->connect();
 
 #ifdef USE_TIME
   this->setup_time_();
@@ -279,19 +279,17 @@ uint8_t Bedjet::set_notify_(const bool enable) {
 }
 
 
-void Bedjet::update() {
-  ESP_LOGV(TAG, "update()");
-
-  if (this->node_state != espbt::ClientState::ESTABLISHED) {
-    if (!this->parent()->enabled) {
-      ESP_LOGD(TAG, "Not connected, because enabled=false");
+PranaBLE::update() {
+  if (this->node_state != esp32_ble_tracker::ClientState::ESTABLISHED) {
+    if (!parent()->enabled) {
+      ESP_LOGW(TAG, "Reconnecting to device");
+      parent()->set_enabled(true);
+      parent()->connect();
     } else {
-      // Possibly still trying to connect.
-      ESP_LOGD(TAG, "Not connected, enabled=true");
+      ESP_LOGW(TAG, "Connection in progress");
     }
-
-    return;
   }
+
 
 
 /*    uint32_t now = millis();
