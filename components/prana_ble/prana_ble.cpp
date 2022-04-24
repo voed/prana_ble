@@ -35,7 +35,9 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       set_notify_(true);
       
       
-
+      write_notify_message_();
+      this->update();
+      this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
 
       
       //request_read_values_();
@@ -44,9 +46,8 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
 
     case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
       ESP_LOGW(TAG, "REG_FOR_NOTIFY");
-      this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
-      write_notify_message_();
-      this->update();
+
+
       break;
     }
     case ESP_GATTC_NOTIFY_EVT: {
@@ -61,7 +62,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       }else{
           ESP_LOGW(TAG, "ESP_GATTC_NOTIFY_EVT, receive indicate value:");
       }
-      esp_log_buffer_hex(TAG, param->notify.value, param->notify.value_len);
+      esp_log_buffer_hex(TAG, param->notify.value, param->notify.value_len, LOG_DEFAULT_LEVEL_WARN);
       break;
     }
     case ESP_GATTC_WRITE_CHAR_EVT: {
@@ -77,6 +78,8 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         ESP_LOGW(TAG, "Data %d, len %d", param->read.value[10], param->read.value_len);
         break;
       }
+
+      ESP_LOGW(TAG, "Data %d, len %d", param->read.value[10], param->read.value_len);
       if (param->read.handle == this->char_handle_) {
         read_sensors_(param->read.value, param->read.value_len);
       }
@@ -91,7 +94,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
 void PranaBLE::read_sensors_(uint8_t *value, uint16_t value_len) {
 
 
-    esp_log_buffer_hex(TAG, value, value_len);
+    esp_log_buffer_hex(TAG, value, value_len, LOG_DEFAULT_LEVEL_WARN);
     ESP_LOGD(TAG, "Value len: %d", value_len);
     /*ESP_LOGD(TAG, "is_on: %d", value[10]);
     ESP_LOGD(TAG, "brightness: %d", value[10]);
