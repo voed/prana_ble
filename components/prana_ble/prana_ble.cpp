@@ -35,7 +35,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
       this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
 
       
-      write_notify_message_()
+      write_notify_message_();
       //request_read_values_();
       break;
     }
