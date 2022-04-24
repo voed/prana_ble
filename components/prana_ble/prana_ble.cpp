@@ -47,7 +47,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
 
     case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
       ESP_LOGW(TAG, "REG_FOR_NOTIFY");
-      auto *descr = this->get_config_descriptor(param->reg_for_notify.handle);
+      auto *descr = this->parent()->get_config_descriptor(param->reg_for_notify.handle);
       if (descr == nullptr) {
         ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", param->reg_for_notify.handle);
         break;
