@@ -166,6 +166,8 @@ void PranaBLE::update() {
       ESP_LOGW(TAG, "Connection in progress");
     }
   }
+  else
+    write_query_message_();
 }
 
 uint8_t PranaBLE::set_notify_(const bool enable) {
@@ -224,12 +226,7 @@ void PranaBLE::dump_config() {
 }
 
 
-void PranaBLE::update() {
-  if (this->node_state != espbt::ClientState::ESTABLISHED)
-    return;
-  write_query_message_();
-  
-}
+
 
 PranaBLE::PranaBLE()
     : PollingComponent(10000),
