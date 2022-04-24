@@ -279,7 +279,7 @@ uint8_t Bedjet::set_notify_(const bool enable) {
 }
 
 
-BedJet::update() {
+Bedjet::update() {
   if (this->node_state != esp32_ble_tracker::ClientState::ESTABLISHED) {
     if (!parent()->enabled) {
       ESP_LOGW(TAG, "Reconnecting to device");
