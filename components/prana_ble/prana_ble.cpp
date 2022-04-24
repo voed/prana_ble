@@ -213,7 +213,7 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
 uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
   auto handle = this->config_descr_status_;
   if (handle == 0) {
-    ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", this->char_handle_status_);
+    ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", this->config_descr_status_);
     return -1;
   }
 
