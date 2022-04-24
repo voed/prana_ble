@@ -216,9 +216,9 @@ void Bedjet::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
  * to `Established`.
  */
 uint8_t Bedjet::write_notify_config_descriptor_(bool enable) {
-  auto handle = this->config_char_status_;
+  auto handle = this->char_handle_status_;
   if (handle == 0) {
-    ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", this->config_descr_status_);
+    ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", this->char_handle_status_);
     return -1;
   }
 
@@ -263,13 +263,13 @@ uint8_t Bedjet::set_notify_(const bool enable) {
   uint8_t status;
   if (enable) {
     status = esp_ble_gattc_register_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
-                                               this->config_char_status_);
+                                               this->char_handle_status_);
     if (status) {
       ESP_LOGW(TAG, "esp_ble_gattc_register_for_notify failed, status=%d", status);
     }
   } else {
     status = esp_ble_gattc_unregister_for_notify(this->parent_->gattc_if, this->parent_->remote_bda,
-                                                 this->config_char_status_);
+                                                 this->char_handle_status_);
     if (status) {
       ESP_LOGW(TAG, "esp_ble_gattc_unregister_for_notify failed, status=%d", status);
     }
