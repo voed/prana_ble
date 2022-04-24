@@ -52,9 +52,10 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
         ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", param->reg_for_notify.handle);
         break;
       }
-      uint8_t notify_en = 1;
+      uint8_t notify_en = 2;
       auto status = esp_ble_gattc_write_char_descr(this->parent()->gattc_if, this->parent()->conn_id, descr->handle, sizeof(notify_en),
                                                    &notify_en, ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
+
       //write_notify_message_();
       //vTaskDelay(500 / portTICK_PERIOD_MS);
       
