@@ -44,7 +44,7 @@ void PranaBLE::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gat
 
     case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
       ESP_LOGW(TAG, "REG_FOR_NOTIFY");
-      this->node_state = espbt::ClientState::ESTABLISHED;
+      this->node_state = esp32_ble_tracker::ClientState::ESTABLISHED;
       write_notify_message_();
       this->update();
       break;
