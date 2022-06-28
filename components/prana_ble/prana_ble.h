@@ -7,7 +7,6 @@
 #include <iterator>
 #include "esphome/components/ble_client/ble_client.h"
 #include "esphome/components/esp32_ble_tracker/esp32_ble_tracker.h"
-#include "esphome/components/sensor/sensor.h"
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
 
@@ -28,8 +27,7 @@ class PranaBLE : public PollingComponent, public ble_client::BLEClientNode {
   void gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if,
                            esp_ble_gattc_cb_param_t *param) override;
 
-  void set_radon(sensor::Sensor *radon) { radon_sensor_ = radon; }
-  void set_radon_long_term(sensor::Sensor *radon_long_term) { radon_long_term_sensor_ = radon_long_term; }
+
 
  protected:
   bool is_valid_radon_value_(float radon);
@@ -40,8 +38,6 @@ class PranaBLE : public PollingComponent, public ble_client::BLEClientNode {
   void request_read_values_();
   uint8_t set_notify_(const bool enable);
 
-  sensor::Sensor *radon_sensor_{nullptr};
-  sensor::Sensor *radon_long_term_sensor_{nullptr};
 
   uint16_t char_handle_;
   esp32_ble_tracker::ESPBTUUID service_uuid_;
