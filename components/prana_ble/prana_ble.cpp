@@ -235,8 +235,8 @@ void PranaBLE::write_notify_message_() {
 
 void PranaBLE::write_query_message_() {
   ESP_LOGW(TAG, "writing 0x50 to write service");
-  //uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A };
-  uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A }; //{ 0xBE, 0xEF, 0x04, 0x0C };
+  uint8_t request[] = { 0xBE, 0xEF, 0x04, 0x06 };
+  //uint8_t request[] = { 0xBE, 0xEF, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x5A }; //{ 0xBE, 0xEF, 0x04, 0x0C };
   auto status = esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->char_handle_,
                                                sizeof(request), request, ESP_GATT_WRITE_TYPE_NO_RSP,
                                                ESP_GATT_AUTH_REQ_NONE);
