@@ -406,8 +406,8 @@ void BLEService::parse_characteristics() {
 
 
 
-    byte write_data[] = {0xbe, 0xef, 0x04, 0x06};
-    characteristic->write_value(write_data, 4);
+    char write_data[] = {0xbe, 0xef, 0x04, 0x06};
+    characteristic->write_value(write_data, sizeof(write_data));
 
     characteristic->parse_descriptors();
     offset++;
