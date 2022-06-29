@@ -385,7 +385,7 @@ void BLEService::parse_characteristics() {
     
 
 
-    auto *descr = this->client->get_config_descriptor(characteristic->handle);
+    /*auto *descr = this->client->get_config_descriptor(characteristic->handle);
     if (descr == nullptr) {
     ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", characteristic->handle);
     break;
@@ -402,7 +402,7 @@ void BLEService::parse_characteristics() {
                                         (uint8_t *) &notify_en, ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
     if (notify_status) {
         ESP_LOGW(TAG, "esp_ble_gattc_write_char_descr error, status=%d", notify_status);
-    }
+    }*/
 
 
 
