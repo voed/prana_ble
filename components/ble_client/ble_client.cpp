@@ -408,8 +408,8 @@ void BLEService::parse_characteristics() {
 
     
 
-    uint8_t write_data[] = {0xbe, 0xef, 0x04, 0x06};
-    ESP_LOGW(TAG, "Writing data %i %i %i %i", write_data[0], write_data[1], write_data[2], write_data[3]);
+    //uint8_t write_data[] = {0xbe, 0xef, 0x04, 0x06};
+    //ESP_LOGW(TAG, "Writing data %i %i %i %i", write_data[0], write_data[1], write_data[2], write_data[3]);
     //characteristic->write_value(write_data, sizeof(write_data));
     /*auto wr_status = esp_ble_gattc_write_char(this->client->gattc_if, this->client->conn_id, characteristic->handle, sizeof(write_data), write_data,
                                             ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE);
