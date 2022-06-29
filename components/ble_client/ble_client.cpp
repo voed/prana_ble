@@ -397,11 +397,11 @@ void BLEService::parse_characteristics() {
     break;
     }
     uint16_t notify_en = 1;
-    auto status =
+    auto notify_status =
         esp_ble_gattc_write_char_descr(this->client->gattc_if, this->client->conn_id, descr->handle, sizeof(notify_en),
                                         (uint8_t *) &notify_en, ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
-    if (status) {
-        ESP_LOGW(TAG, "esp_ble_gattc_write_char_descr error, status=%d", status);
+    if (notify_status) {
+        ESP_LOGW(TAG, "esp_ble_gattc_write_char_descr error, status=%d", notify_status);
     }
 
 
