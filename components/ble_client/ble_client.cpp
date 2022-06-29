@@ -411,11 +411,11 @@ void BLEService::parse_characteristics() {
     uint8_t write_data[] = {0xbe, 0xef, 0x04, 0x06};
     ESP_LOGW(TAG, "Writing data %i %i %i %i", write_data[0], write_data[1], write_data[2], write_data[3]);
     //characteristic->write_value(write_data, sizeof(write_data));
-    auto wr_status = esp_ble_gattc_write_char(this->client->gattc_if, this->client->conn_id, characteristic->handle, sizeof(write_data), write_data,
+    /*auto wr_status = esp_ble_gattc_write_char(this->client->gattc_if, this->client->conn_id, characteristic->handle, sizeof(write_data), write_data,
                                             ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE);
     if (wr_status) {
         ESP_LOGW(TAG, "Error sending write value to BLE gattc server, status=%d", wr_status);
-    }
+    }*/
     characteristic->parse_descriptors();
     offset++;
   }
@@ -434,6 +434,7 @@ void BLECharacteristic::parse_descriptors() {
     uint16_t count = 1;
     esp_gatt_status_t status = esp_ble_gattc_get_all_descr(
         this->service->client->gattc_if, this->service->client->conn_id, this->handle, &result, &count, offset);
+    ESP_LOGW(TAG, "Descriptors count: %i", count);
     if (status == ESP_GATT_INVALID_OFFSET || status == ESP_GATT_NOT_FOUND) {
       break;
     }
