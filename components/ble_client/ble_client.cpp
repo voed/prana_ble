@@ -451,7 +451,7 @@ void BLECharacteristic::parse_descriptors() {
     desc->handle = result.handle;
     desc->characteristic = this;
     this->descriptors.push_back(desc);
-    ESP_LOGV(TAG, "   descriptor %s, handle 0x%x", desc->uuid.to_string().c_str(), desc->handle);
+    ESP_LOGI(TAG, "   descriptor %s, handle 0x%x", desc->uuid.to_string().c_str(), desc->handle);
     offset++;
   }
 }
