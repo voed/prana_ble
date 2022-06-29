@@ -445,7 +445,7 @@ void BLECharacteristic::parse_descriptors() {
     if (count == 0) {
       break;
     }
-
+    ESP_LOGW(TAG, "Reading descriptor...");
     BLEDescriptor *desc = new BLEDescriptor();  // NOLINT(cppcoreguidelines-owning-memory)
     desc->uuid = espbt::ESPBTUUID::from_uuid(result.uuid);
     desc->handle = result.handle;
