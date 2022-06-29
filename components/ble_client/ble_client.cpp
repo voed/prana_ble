@@ -405,8 +405,10 @@ void BLEService::parse_characteristics() {
     }*/
 
 
+    
 
     uint8_t write_data[] = {0xbe, 0xef, 0x04, 0x06};
+    ESP_LOGW(TAG, "Writing data %i %i %i %i", write_data[0], write_data[1], write_data[2], write_data[3]);
     characteristic->write_value(write_data, sizeof(write_data));
 
     characteristic->parse_descriptors();
