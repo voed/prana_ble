@@ -387,15 +387,16 @@ void BLEService::parse_characteristics() {
 
     auto *descr = this->client->get_config_descriptor(characteristic->handle);
     if (descr == nullptr) {
-    ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", characteristic->handle);
-    break;
+        ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", characteristic->handle);
+    
     }
-    /*if (descr->uuid.get_uuid().len != ESP_UUID_LEN_16 ||
+    if (descr->uuid.get_uuid().len != ESP_UUID_LEN_16 ||
         descr->uuid.get_uuid().uuid.uuid16 != ESP_GATT_UUID_CHAR_CLIENT_CONFIG) {
-    ESP_LOGW(TAG, "Handle 0x%x (uuid %s) is not a client config char uuid", characteristic->handle,
+        ESP_LOGW(TAG, "Handle 0x%x (uuid %s) is not a client config char uuid", characteristic->handle,
                 descr->uuid.to_string().c_str());
-    break;
     }
+    ESP_LOGW(TAG, "Registering for notifications");
+    /*
     uint16_t notify_en = 1;
     auto notify_status =
         esp_ble_gattc_write_char_descr(this->client->gattc_if, this->client->conn_id, descr->handle, sizeof(notify_en),
