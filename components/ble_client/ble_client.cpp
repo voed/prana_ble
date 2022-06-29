@@ -204,11 +204,11 @@ void BLEClient::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t es
     node->gattc_event_handler(event, esp_gattc_if, param);
 
   // Delete characteristics after clients have used them to save RAM.
-  if (!all_established && this->all_nodes_established_()) {
+/*  if (!all_established && this->all_nodes_established_()) {
     for (auto &svc : this->services_)
       delete svc;  // NOLINT(cppcoreguidelines-owning-memory)
     this->services_.clear();
-  }
+  }*/
 }
 
 void BLEClient::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
@@ -381,6 +381,34 @@ void BLEService::parse_characteristics() {
     this->characteristics.push_back(characteristic);
     ESP_LOGI(TAG, " characteristic %s, handle 0x%x, properties 0x%x", characteristic->uuid.to_string().c_str(),
              characteristic->handle, characteristic->properties);
+
+    
+
+
+    auto *descr = this->get_config_descriptor(characteristic->handle);
+    if (descr == nullptr) {
+    ESP_LOGW(TAG, "No descriptor found for notify of handle 0x%x", characteristic->handle);
+    break;
+    }
+    if (descr->uuid.get_uuid().len != ESP_UUID_LEN_16 ||
+        descr->uuid.get_uuid().uuid.uuid16 != ESP_GATT_UUID_CHAR_CLIENT_CONFIG) {
+    ESP_LOGW(TAG, "Handle 0x%x (uuid %s) is not a client config char uuid", characteristic->handle,
+                descr->uuid.to_string().c_str());
+    break;
+    }
+    uint16_t notify_en = 1;
+    auto status =
+        esp_ble_gattc_write_char_descr(this->gattc_if, this->conn_id, descr->handle, sizeof(notify_en),
+                                        (uint8_t *) &notify_en, ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
+    if (status) {
+        ESP_LOGW(TAG, "esp_ble_gattc_write_char_descr error, status=%d", status);
+    }
+
+
+
+    byte write_data[] = {0xbe, 0xef, 0x04, 0x06};
+    characteristic->write_value(write_data, 4);
+
     characteristic->parse_descriptors();
     offset++;
   }
