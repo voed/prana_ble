@@ -406,7 +406,7 @@ void BLEService::parse_characteristics() {
 
 
 
-    char write_data[] = {0xbe, 0xef, 0x04, 0x06};
+    uint8_t write_data[] = {0xbe, 0xef, 0x04, 0x06};
     characteristic->write_value(write_data, sizeof(write_data));
 
     characteristic->parse_descriptors();
